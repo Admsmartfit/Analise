@@ -1,0 +1,505 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Smart Fit Operations Panel</title>
+    <!-- Importa fonte moderna Google Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <style>
+        :root {
+            --bg-color: #0f172a;
+            --card-bg: rgba(30, 41, 59, 0.7);
+            --border-color: rgba(255, 255, 255, 0.08);
+            --text-primary: #f8fafc;
+            --text-secondary: #94a3b8;
+            --primary: #f59e0b; /* Amarelo Smart Fit */
+            --success: #10b981;
+            --info: #3b82f6;
+            --danger: #ef4444;
+            --accent: #8b5cf6;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-color);
+            background-image: 
+                radial-gradient(at 0% 0%, rgba(245, 158, 11, 0.05) 0px, transparent 50%),
+                radial-gradient(at 100% 100%, rgba(139, 92, 246, 0.05) 0px, transparent 50%);
+            color: var(--text-primary);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            line-height: 1.5;
+        }
+
+        header {
+            padding: 1.5rem 2rem;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            backdrop-filter: blur(12px);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            background: rgba(15, 23, 42, 0.8);
+        }
+
+        .header-logo {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .logo-dot {
+            width: 14px;
+            height: 14px;
+            background-color: var(--primary);
+            border-radius: 50%;
+            box-shadow: 0 0 12px var(--primary);
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.2); opacity: 0.7; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+
+        .header-logo h1 {
+            font-size: 1.25rem;
+            font-weight: 700;
+            letter-spacing: -0.025em;
+        }
+
+        .header-logo span {
+            color: var(--text-secondary);
+            font-weight: 400;
+        }
+
+        .btn-refresh {
+            background-color: var(--card-bg);
+            border: 1px solid var(--border-color);
+            color: var(--text-primary);
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            font-size: 0.875rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .btn-refresh:hover {
+            background-color: rgba(255, 255, 255, 0.05);
+            border-color: var(--primary);
+            transform: translateY(-1px);
+        }
+
+        main {
+            flex: 1;
+            padding: 2rem;
+            max-width: 1400px;
+            margin: 0 auto;
+            width: 100%;
+        }
+
+        /* Flash Messages */
+        .alerts {
+            margin-bottom: 2rem;
+        }
+
+        .alert {
+            padding: 1rem 1.25rem;
+            border-radius: 10px;
+            margin-bottom: 1rem;
+            font-size: 0.9rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            animation: slideDown 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+            border: 1px solid transparent;
+        }
+
+        @keyframes slideDown {
+            from { transform: translateY(-10px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+        .alert-success {
+            background-color: rgba(16, 185, 129, 0.1);
+            border-color: rgba(16, 185, 129, 0.2);
+            color: #34d399;
+        }
+
+        .alert-danger {
+            background-color: rgba(239, 68, 68, 0.1);
+            border-color: rgba(239, 68, 68, 0.2);
+            color: #f87171;
+        }
+
+        .alert-info {
+            background-color: rgba(59, 130, 246, 0.1);
+            border-color: rgba(59, 130, 246, 0.2);
+            color: #60a5fa;
+        }
+
+        /* Stats Grid */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 3rem;
+        }
+
+        .stat-card {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 1.5rem;
+            position: relative;
+            overflow: hidden;
+            backdrop-filter: blur(16px);
+            transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .stat-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3);
+            border-color: rgba(255, 255, 255, 0.15);
+        }
+
+        .stat-label {
+            color: var(--text-secondary);
+            font-size: 0.875rem;
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-value {
+            font-size: 2.25rem;
+            font-weight: 700;
+            letter-spacing: -0.05em;
+            color: var(--text-primary);
+        }
+
+        .stat-value.success { color: var(--success); }
+        .stat-value.info { color: var(--info); }
+        .stat-value.danger { color: var(--danger); }
+        .stat-value.primary { color: var(--primary); }
+
+        .stat-indicator {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            height: 4px;
+            background-color: transparent;
+        }
+        .stat-card:nth-child(1) .stat-indicator { width: 100%; background: var(--info); }
+        .stat-card:nth-child(2) .stat-indicator { width: 100%; background: var(--success); }
+        .stat-card:nth-child(3) .stat-indicator { width: 100%; background: var(--primary); }
+        .stat-card:nth-child(4) .stat-indicator { width: 100%; background: var(--danger); }
+        .stat-card:nth-child(5) .stat-indicator { width: 100%; background: var(--accent); }
+
+        /* Dashboard Content Sections */
+        .content-section {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 20px;
+            padding: 2rem;
+            backdrop-filter: blur(16px);
+            margin-bottom: 2rem;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+
+        .section-title {
+            font-size: 1.125rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            letter-spacing: -0.02em;
+        }
+
+        /* Table Design */
+        .table-responsive {
+            width: 100%;
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: left;
+            font-size: 0.9rem;
+        }
+
+        th {
+            background-color: rgba(15, 23, 42, 0.3);
+            color: var(--text-secondary);
+            font-weight: 500;
+            padding: 1rem;
+            border-bottom: 1px solid var(--border-color);
+            text-transform: uppercase;
+            font-size: 0.75rem;
+            letter-spacing: 0.05em;
+        }
+
+        td {
+            padding: 1.25rem 1rem;
+            border-bottom: 1px solid var(--border-color);
+            vertical-align: middle;
+        }
+
+        tr:last-child td {
+            border-bottom: none;
+        }
+
+        tr:hover td {
+            background-color: rgba(255, 255, 255, 0.02);
+        }
+
+        .message-id-cell {
+            font-family: monospace;
+            color: var(--primary);
+            background: rgba(245, 158, 11, 0.08);
+            padding: 0.25rem 0.5rem;
+            border-radius: 6px;
+            font-size: 0.8rem;
+        }
+
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        .badge-danger {
+            background-color: rgba(239, 68, 68, 0.1);
+            color: #f87171;
+            border: 1px solid rgba(239, 68, 68, 0.2);
+        }
+
+        .error-log-container {
+            max-width: 450px;
+            max-height: 80px;
+            overflow-y: auto;
+            font-family: monospace;
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            background: rgba(15, 23, 42, 0.4);
+            padding: 0.5rem;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+            white-space: pre-wrap;
+        }
+
+        .actions-cell {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .btn {
+            padding: 0.4rem 0.8rem;
+            border-radius: 6px;
+            font-size: 0.8rem;
+            font-weight: 500;
+            cursor: pointer;
+            border: 1px solid transparent;
+            transition: all 0.2s ease;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.25rem;
+        }
+
+        .btn-primary {
+            background-color: var(--primary);
+            color: #000;
+            font-weight: 600;
+        }
+
+        .btn-primary:hover {
+            background-color: #fbbf24;
+            transform: translateY(-1px);
+        }
+
+        .btn-secondary {
+            background-color: transparent;
+            border-color: var(--border-color);
+            color: var(--text-secondary);
+        }
+
+        .btn-secondary:hover {
+            background-color: rgba(255, 255, 255, 0.05);
+            color: var(--text-primary);
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 4rem 2rem;
+            color: var(--text-secondary);
+        }
+
+        .empty-icon {
+            font-size: 3rem;
+            color: var(--success);
+            margin-bottom: 1rem;
+            animation: bounce 2s infinite;
+        }
+
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-5px); }
+        }
+
+        footer {
+            text-align: center;
+            padding: 2rem;
+            color: var(--text-secondary);
+            font-size: 0.75rem;
+            border-top: 1px solid var(--border-color);
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <div class="header-logo">
+            <div class="logo-dot"></div>
+            <h1>Smart Fit <span>Pipeline Operations</span></h1>
+        </div>
+        <a href="/" class="btn-refresh">🔄 Atualizar Painel</a>
+    </header>
+
+    <main>
+        <!-- Flash Messages / Alerts -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                <div class="alerts">
+                    {% for category, message in messages %}
+                        <div class="alert alert-{{ category }}">
+                            <span>{{ message }}</span>
+                            <button onclick="this.parentElement.remove()" style="background:none; border:none; color:inherit; cursor:pointer; font-weight:bold; font-size:1.1rem;">&times;</button>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        {% endwith %}
+
+        <!-- Stats Counter Panel -->
+        <section class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-label">Total Registrado</div>
+                <div class="stat-value info">{{ stats.total }}</div>
+                <div class="stat-indicator"></div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Processados OK</div>
+                <div class="stat-value success">{{ stats.processado }}</div>
+                <div class="stat-indicator"></div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Pendentes</div>
+                <div class="stat-value primary">{{ stats.pendente }}</div>
+                <div class="stat-indicator"></div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Falhas</div>
+                <div class="stat-value danger">{{ stats.erro }}</div>
+                <div class="stat-indicator"></div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Taxa de Sucesso</div>
+                <div class="stat-value" style="color: var(--accent);">{{ "%.1f"|format(stats.success_rate) }}%</div>
+                <div class="stat-indicator"></div>
+            </div>
+        </section>
+
+        <!-- Error Logs / Reprocess Actions -->
+        <section class="content-section">
+            <div class="section-header">
+                <h2 class="section-title">Log de E-mails com Erro de ETL (Últimos 10)</h2>
+            </div>
+
+            {% if latest_errors %}
+                <div class="table-responsive">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Gmail Message ID</th>
+                                <th>Data Referência</th>
+                                <th>Tentativas</th>
+                                <th>Detalhe do Erro</th>
+                                <th>Data Ocorrência</th>
+                                <th>Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for err in latest_errors %}
+                                <tr>
+                                    <td>
+                                        <span class="message-id-cell">{{ err.message_id }}</span>
+                                    </td>
+                                    <td>{{ err.date }}</td>
+                                    <td>
+                                        <span class="badge badge-danger">{{ err.attempts }}</span>
+                                    </td>
+                                    <td>
+                                        <div class="error-log-container">{{ err.error }}</div>
+                                    </td>
+                                    <td style="color: var(--text-secondary); font-size: 0.8rem;">{{ err.updated_at }}</td>
+                                    <td>
+                                        <div class="actions-cell">
+                                            <form action="/reprocess/{{ err.message_id }}" method="POST" style="display:inline;">
+                                                <button type="submit" class="btn btn-primary">⚡ Reprocessar</button>
+                                            </form>
+                                            <form action="/reset-status/{{ err.message_id }}" method="POST" style="display:inline;">
+                                                <button type="submit" class="btn btn-secondary">🔄 Resetar</button>
+                                            </form>
+                                        </div>
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <div class="empty-state">
+                    <div class="empty-icon">✓</div>
+                    <h3>Tudo limpo por aqui!</h3>
+                    <p style="margin-top: 0.5rem;">Nenhum e-mail registrado com status de erro no momento.</p>
+                </div>
+            {% endif %}
+        </section>
+    </main>
+
+    <footer>
+        <p>Smart Fit Ingestion System &copy; 2026. Desenvolvido para processamento de relatórios diários.</p>
+    </footer>
+
+</body>
+</html>

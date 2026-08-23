@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Configuração do Gmail - Smart Fit Ingestion</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-color: #0f172a;
+            --card-bg: rgba(30, 41, 59, 0.7);
+            --border-color: rgba(255, 255, 255, 0.08);
+            --text-primary: #f8fafc;
+            --text-secondary: #94a3b8;
+            --primary: #f59e0b;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-color);
+            background-image: radial-gradient(at 0% 0%, rgba(245, 158, 11, 0.05) 0px, transparent 50%);
+            color: var(--text-primary);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        header {
+            padding: 1.5rem 2rem;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        header h1 {
+            font-size: 1.25rem;
+            font-weight: 700;
+        }
+
+        header h1 span {
+            color: var(--text-secondary);
+            font-weight: 400;
+        }
+
+        main {
+            flex: 1;
+            padding: 2rem;
+            max-width: 800px;
+            margin: 0 auto;
+            width: 100%;
+        }
+
+        .config-card {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 20px;
+            padding: 2.5rem;
+            backdrop-filter: blur(16px);
+        }
+
+        h2 {
+            font-size: 1.5rem;
+            margin-bottom: 1.5rem;
+            letter-spacing: -0.02em;
+        }
+
+        ol {
+            margin-left: 1.5rem;
+            margin-bottom: 2rem;
+            color: var(--text-secondary);
+        }
+
+        li {
+            margin-bottom: 1rem;
+            line-height: 1.6;
+        }
+
+        li strong {
+            color: var(--text-primary);
+        }
+
+        .btn {
+            display: inline-block;
+            background-color: var(--primary);
+            color: #000;
+            font-weight: 600;
+            padding: 0.75rem 1.5rem;
+            border-radius: 8px;
+            text-decoration: none;
+            transition: all 0.2s ease;
+        }
+
+        .btn:hover {
+            background-color: #fbbf24;
+            transform: translateY(-1px);
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Smart Fit <span>Gmail Config</span></h1>
+        <a href="/" class="btn" style="background-color: var(--card-bg); color: var(--text-primary); border: 1px solid var(--border-color); padding: 0.5rem 1rem;">Voltar ao Painel</a>
+    </header>
+    <main>
+        <div class="config-card">
+            <h2>Instruções de Configuração da API do Gmail</h2>
+            <ol>
+                <li>Acesse o <strong>Google Cloud Console</strong> (https://console.cloud.google.com/).</li>
+                <li>Crie um novo projeto (ex.: <em>smartfit-etl</em>).</li>
+                <li>Vá em <strong>APIs e Serviços &gt; Biblioteca</strong> e ative a <strong>Gmail API</strong>.</li>
+                <li>Configure a <strong>Tela de Consentimento OAuth</strong> (Tipo de usuário: Externo), adicione seu e-mail de suporte e inclua a conta do Gmail que recebe os relatórios como <strong>Usuário de Teste</strong>.</li>
+                <li>Crie as credenciais (<strong>Credenciais &gt; Criar Credenciais &gt; ID do cliente OAuth</strong>), escolha o tipo <strong>App para computador</strong> (Desktop app).</li>
+                <li>Baixe o arquivo JSON, renomeie-o para <strong>credentials.json</strong> e salve-o na pasta <code>app/auth/credentials/</code>.</li>
+                <li>Execute o assistente interativo: <code>python -m app.cli setup-gmail</code> para autorizar a conta.</li>
+            </ol>
+            <a href="/" class="btn">Concluir e Ir ao Painel</a>
+        </div>
+    </main>
+</body>
+</html>

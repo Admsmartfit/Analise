@@ -1,0 +1,74 @@
+2026-08-23 11:51:56,877 [INFO] [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:5000
+ * Running on http://192.168.0.65:5000
+2026-08-23 11:51:56,877 [INFO] [33mPress CTRL+C to quit[0m
+2026-08-23 11:51:56,878 [INFO]  * Restarting with stat
+2026-08-23 11:51:57,874 [WARNING]  * Debugger is active!
+2026-08-23 11:51:57,877 [INFO]  * Debugger PIN: 120-359-007
+2026-08-23 11:51:59,428 [INFO] 127.0.0.1 - - [23/Aug/2026 11:51:59] "[35m[1mGET / HTTP/1.1[0m" 500 -
+2026-08-23 11:52:27,246 [INFO]  * Detected change in 'C:\\Users\\ralan\\programa\\Analise\\app\\web\\routes.py', reloading
+2026-08-23 11:52:27,661 [INFO]  * Restarting with stat
+2026-08-23 11:52:28,562 [WARNING]  * Debugger is active!
+2026-08-23 11:52:28,566 [INFO]  * Debugger PIN: 120-359-007
+2026-08-23 11:52:35,005 [INFO] [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:5000
+ * Running on http://192.168.0.65:5000
+2026-08-23 11:52:35,005 [INFO] [33mPress CTRL+C to quit[0m
+2026-08-23 11:52:35,007 [INFO]  * Restarting with stat
+2026-08-23 11:52:35,759 [WARNING]  * Debugger is active!
+2026-08-23 11:52:35,763 [INFO]  * Debugger PIN: 120-359-007
+2026-08-23 11:52:37,970 [INFO] 127.0.0.1 - - [23/Aug/2026 11:52:37] "GET / HTTP/1.1" 200 -
+2026-08-23 12:09:59,083 [INFO] [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:5000
+ * Running on http://192.168.0.65:5000
+2026-08-23 12:09:59,083 [INFO] [33mPress CTRL+C to quit[0m
+2026-08-23 12:09:59,100 [INFO]  * Restarting with stat
+2026-08-23 12:09:59,826 [WARNING]  * Debugger is active!
+2026-08-23 12:09:59,829 [INFO]  * Debugger PIN: 120-359-007
+2026-08-23 12:10:05,582 [INFO] 127.0.0.1 - - [23/Aug/2026 12:10:05] "GET / HTTP/1.1" 200 -
+2026-08-23 12:10:06,157 [INFO] 127.0.0.1 - - [23/Aug/2026 12:10:06] "[33mGET /favicon.ico HTTP/1.1[0m" 404 -
+2026-08-23 12:10:14,644 [INFO] 127.0.0.1 - - [23/Aug/2026 12:10:14] "GET / HTTP/1.1" 200 -
+2026-08-23 12:10:33,568 [INFO] 127.0.0.1 - - [23/Aug/2026 12:10:33] "GET / HTTP/1.1" 200 -
+2026-08-23 12:10:33,869 [INFO] 127.0.0.1 - - [23/Aug/2026 12:10:33] "[33mGET /favicon.ico HTTP/1.1[0m" 404 -
+2026-08-23 12:22:19,253 [INFO]  * Detected change in 'C:\\Users\\ralan\\programa\\Analise\\app\\auth\\gmail_client.py', reloading
+2026-08-23 12:22:19,477 [INFO]  * Restarting with stat
+2026-08-23 12:22:19,783 [WARNING]  * Debugger is active!
+2026-08-23 12:22:19,786 [INFO]  * Debugger PIN: 120-359-007
+2026-08-23 12:23:55,151 [INFO]  * Detected change in 'C:\\Users\\ralan\\programa\\Analise\\app\\auth\\setup_gmail.py', reloading
+2026-08-23 12:23:55,265 [INFO]  * Restarting with stat
+2026-08-23 12:23:55,597 [WARNING]  * Debugger is active!
+2026-08-23 12:23:55,599 [INFO]  * Debugger PIN: 120-359-007
+2026-08-23 12:24:06,004 [INFO]  * Detected change in 'C:\\Users\\ralan\\programa\\Analise\\app\\etl\\discovery.py', reloading
+2026-08-23 12:24:06,090 [INFO]  * Restarting with stat
+2026-08-23 12:24:06,439 [WARNING]  * Debugger is active!
+2026-08-23 12:24:06,441 [INFO]  * Debugger PIN: 120-359-007
+2026-08-23 12:24:15,829 [INFO]  * Detected change in 'C:\\Users\\ralan\\programa\\Analise\\app\\cli.py', reloading
+2026-08-23 12:24:15,972 [INFO]  * Restarting with stat
+2026-08-23 12:24:16,304 [WARNING]  * Debugger is active!
+2026-08-23 12:24:16,307 [INFO]  * Debugger PIN: 120-359-007
+2026-08-23 12:24:20,440 [INFO]  * Detected change in 'C:\\Users\\ralan\\programa\\Analise\\app\\cli.py', reloading
+2026-08-23 12:24:20,541 [INFO]  * Restarting with stat
+2026-08-23 12:24:20,868 [WARNING]  * Debugger is active!
+2026-08-23 12:24:20,870 [INFO]  * Debugger PIN: 120-359-007
+2026-08-23 13:02:07,780 [INFO] [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:5000
+ * Running on http://192.168.0.65:5000
+2026-08-23 13:02:07,781 [INFO] [33mPress CTRL+C to quit[0m
+2026-08-23 13:02:07,785 [INFO]  * Restarting with stat
+2026-08-23 13:02:08,273 [WARNING]  * Debugger is active!
+2026-08-23 13:02:08,276 [INFO]  * Debugger PIN: 120-359-007
+2026-08-23 13:02:27,704 [INFO] 127.0.0.1 - - [23/Aug/2026 13:02:27] "GET / HTTP/1.1" 200 -
+2026-08-23 13:02:28,276 [INFO] 127.0.0.1 - - [23/Aug/2026 13:02:28] "[33mGET /favicon.ico HTTP/1.1[0m" 404 -
+2026-08-23 13:17:36,845 [INFO] [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:5000
+ * Running on http://192.168.0.65:5000
+2026-08-23 13:17:36,845 [INFO] [33mPress CTRL+C to quit[0m
+2026-08-23 13:17:36,847 [INFO]  * Restarting with stat
+2026-08-23 13:17:37,328 [WARNING]  * Debugger is active!
+2026-08-23 13:17:37,332 [INFO]  * Debugger PIN: 120-359-007
+2026-08-23 13:17:41,754 [INFO] 127.0.0.1 - - [23/Aug/2026 13:17:41] "GET / HTTP/1.1" 200 -
