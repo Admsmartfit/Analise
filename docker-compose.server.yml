@@ -1,0 +1,88 @@
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: smartfit-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${DB_NAME:-smartfit_db}
+      POSTGRES_USER: ${DB_USER:-postgres}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:?defina DB_PASSWORD no .env}
+    volumes:
+      - smartfit-db-data:/var/lib/postgresql/data
+    networks:
+      - smartfit-net
+    # Sem porta exposta ao host de propósito — só os containers deste compose acessam o banco.
+    # Descomente para acessar via psql direto do servidor (ex: em outra porta livre, tipo 5433):
+    # ports:
+    #   - "127.0.0.1:5433:5432"
+
+  web:
+    build: .
+    container_name: smartfit-web
+    restart: unless-stopped
+    command: ["python", "-m", "app.web.routes"]
+    env_file: .env
+    environment:
+      DB_HOST: db
+    ports:
+      - "5030:5000"
+    depends_on:
+      - db
+    networks:
+      - smartfit-net
+
+  ml:
+    build: .
+    container_name: smartfit-ml
+    restart: unless-stopped
+    command: ["streamlit", "run", "app/ml/streamlit_app.py", "--server.address=0.0.0.0"]
+    env_file: .env
+    environment:
+      DB_HOST: db
+    ports:
+      # Só na interface local do servidor — acesse via túnel SSH ou publique depois
+      # uma rota própria no Cloudflare Tunnel se quiser acesso público direto.
+      - "127.0.0.1:8501:8501"
+    depends_on:
+      - db
+    networks:
+      - smartfit-net
+
+  ingestor:
+    build: .
+    container_name: smartfit-ingestor
+    restart: unless-stopped
+    entrypoint: ["/bin/sh", "scripts/daily_loop.sh"]
+    env_file: .env
+    environment:
+      DB_HOST: db
+      INGESTAO_HORA: "07:00"
+    depends_on:
+      - db
+    networks:
+      - smartfit-net
+
+  bi:
+    image: metabase/metabase:latest
+    container_name: smartfit-bi
+    restart: unless-stopped
+    environment:
+      MB_DB_FILE: /metabase-data/metabase.db
+    volumes:
+      - smartfit-metabase-data:/metabase-data
+    ports:
+      # Idem "ml": só local por padrão (o Metabase tem login, mas ainda assim,
+      # menos exposto é mais seguro por padrão).
+      - "127.0.0.1:3000:3000"
+    depends_on:
+      - db
+    networks:
+      - smartfit-net
+
+networks:
+  smartfit-net:
+    driver: bridge
+
+volumes:
+  smartfit-db-data:
+  smartfit-metabase-data:

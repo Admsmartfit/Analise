@@ -1,0 +1,9 @@
+venv/
+__pycache__/
+*.pyc
+.git/
+.env
+logs/*.log
+exports/
+references/
+app/ml/models/*.pkl

@@ -8,10 +8,12 @@ app = Flask(__name__)
 app.secret_key = os.getenv("FLASK_SECRET_KEY", "smartfit-etl-secret-key-12345")
 
 STREAMLIT_PORT = os.getenv("STREAMLIT_PORT", "8501")
-STREAMLIT_URL = f"http://localhost:{STREAMLIT_PORT}"
+# STREAMLIT_URL/METABASE_URL permitem apontar para um domínio público (ex: quando
+# publicados via túnel Cloudflare em servidor) em vez de sempre "localhost".
+STREAMLIT_URL = os.getenv("STREAMLIT_URL") or f"http://localhost:{STREAMLIT_PORT}"
 
 METABASE_PORT = os.getenv("METABASE_PORT", "3000")
-METABASE_URL = f"http://localhost:{METABASE_PORT}"
+METABASE_URL = os.getenv("METABASE_URL") or f"http://localhost:{METABASE_PORT}"
 
 def get_db_stats():
     """Busca as estatísticas gerais do controle de backfill no banco."""
