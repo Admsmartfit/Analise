@@ -57,10 +57,9 @@ sudo usermod -aG docker $USER
 Direto no SSH do servidor (não precisa mais copiar nada do Windows):
 
 ```bash
-sudo mkdir -p /opt/smartfit
-sudo chown $USER:$USER /opt/smartfit
-git clone https://github.com/Admsmartfit/Analise.git /opt/smartfit
-cd /opt/smartfit
+mkdir -p ~/Programa
+git clone https://github.com/Admsmartfit/Analise.git ~/Programa/analise
+cd ~/Programa/analise
 ```
 
 > Se o repositório estiver **privado**, o `git` vai pedir usuário e senha — use seu usuário do GitHub e, no lugar da senha, um **Personal Access Token** (Settings → Developer settings → Personal access tokens, no próprio GitHub). Se estiver público, clona direto sem pedir nada.
@@ -87,22 +86,63 @@ Se o arquivo não existir ou estiver diferente, crie/corrija manualmente com o c
 
 ## ⚙️ Passo 3: Configurar o `.env` do servidor
 
-Conecte no servidor de novo (`ssh usuario@ip-do-servidor`) e rode:
+Conecte no servidor de novo (`ssh usuario@ip-do-servidor`) e rode este comando único — ele **gera as 4 senhas sozinho** (com `openssl`, que já vem em praticamente todo Linux) e escreve o `.env` de uma vez, sem passar pelo `nano` (evita o problema de acentuação/corrupção que já aconteceu):
 
 ```bash
-cd /opt/smartfit
-cp .env.server.example .env
-nano .env
+cd ~/Programa/analise
+
+DB_PASSWORD=$(openssl rand -base64 24 | tr -d '/+=')
+FLASK_SECRET_KEY=$(openssl rand -hex 32)
+MB_ADMIN_PASSWORD=$(openssl rand -base64 18 | tr -d '/+=')
+MB_PG_PASSWORD=$(openssl rand -base64 24 | tr -d '/+=')
+
+cat > .env << EOF
+DB_HOST=db
+DB_PORT=5432
+DB_NAME=smartfit_db
+DB_USER=postgres
+DB_PASSWORD=${DB_PASSWORD}
+
+IMAP_HOST=imap.gmail.com
+IMAP_PORT=993
+IMAP_USER=seuemail@suaempresa.com
+IMAP_APP_PASSWORD=suasenhadeapp16chr
+IMAP_MAILBOX=INBOX
+
+FLASK_SECRET_KEY=${FLASK_SECRET_KEY}
+FLASK_PORT=5000
+FLASK_DEBUG=False
+
+STREAMLIT_PORT=8501
+STREAMLIT_URL=
+
+METABASE_PORT=3000
+METABASE_URL=
+
+MB_ADMIN_EMAIL=seuemail@suaempresa.com
+MB_ADMIN_PASSWORD=${MB_ADMIN_PASSWORD}
+MB_PG_PASSWORD=${MB_PG_PASSWORD}
+EOF
+
+echo "Senhas geradas — guarde num cofre de senhas antes de continuar:"
+echo "DB_PASSWORD=${DB_PASSWORD}"
+echo "FLASK_SECRET_KEY=${FLASK_SECRET_KEY}"
+echo "MB_ADMIN_PASSWORD=${MB_ADMIN_PASSWORD}"
+echo "MB_PG_PASSWORD=${MB_PG_PASSWORD}"
 ```
 
-Preencha com valores reais:
-- `DB_PASSWORD` — escolha uma senha forte nova (não precisa ser a mesma do Windows).
-- `IMAP_USER` / `IMAP_APP_PASSWORD` — os mesmos do seu `.env` do Windows (`ricardo.landeiro@smartfit.com` e a Senha de App).
-- `FLASK_SECRET_KEY` — qualquer texto aleatório longo.
-- `MB_ADMIN_EMAIL` / `MB_ADMIN_PASSWORD` — o login que você vai usar para entrar no Metabase do servidor.
-- `MB_PG_PASSWORD` — uma senha nova para o usuário `metabase_reader` (só leitura, o Metabase usa essa pra conectar no banco).
+Isso deixa só **2 campos** para você preencher manualmente (o resto já vem pronto e seguro). Edite só essas duas linhas:
+
+```bash
+nano .env
+```
+- `IMAP_USER=` → coloque seu e-mail real (ex: `ricardo.landeiro@smartfit.com`)
+- `IMAP_APP_PASSWORD=` → cole a Senha de App do Gmail (gerada em [myaccount.google.com/apppasswords](https://myaccount.google.com/apppasswords)) — **sem espaços**
+- `MB_ADMIN_EMAIL=` → o e-mail que você vai usar para entrar no Metabase do servidor
 
 Salve com `Ctrl+O`, `Enter`, e saia com `Ctrl+X`.
+
+> ⚠️ Se a Senha de App que você tinha usada antes parar de funcionar, gere uma nova em [myaccount.google.com/apppasswords](https://myaccount.google.com/apppasswords) — mais seguro do que reaproveitar uma senha que já apareceu corrompida várias vezes no `.env` do Windows.
 
 ---
 
@@ -111,7 +151,7 @@ Salve com `Ctrl+O`, `Enter`, e saia com `Ctrl+X`.
 De volta no SSH do servidor:
 
 ```bash
-cd /opt/smartfit
+cd ~/Programa/analise
 docker compose -f docker-compose.server.yml up -d --build
 ```
 
@@ -272,7 +312,7 @@ Deve aparecer o painel de operações Smart Fit, com os botões "📊 Painel Ana
 
 **Atualizar o código depois de uma mudança no GitHub:**
 ```bash
-cd /opt/smartfit
+cd ~/Programa/analise
 git pull
 docker compose -f docker-compose.server.yml up -d --build
 ```
