@@ -10,6 +10,7 @@ Este projeto implementa um pipeline de ETL automatizado para extrair relatórios
 - **Integração:** IMAP (Senha de App do Gmail/Google Workspace — sem Google Cloud)
 - **Engine de Parsing:** BeautifulSoup4 / LXML
 - **Painel de Operações:** Flask
+- **Previsão de Cancelamento (opcional):** Streamlit + scikit-learn + Plotly (ver `PRD_SmartFit_Churn_Prediction.md`)
 
 ---
 
@@ -170,6 +171,41 @@ Acesse em: `http://localhost:5000`.
 - Log detalhado das últimas falhas ocorridas no ETL.
 - Botão **Reprocessar** para tentar ingerir novamente um e-mail que falhou.
 - Botão **Resetar** para mover o e-mail de volta ao status de pendente.
+
+---
+
+## 📉 Módulo de Previsão de Risco de Cancelamento (opcional)
+
+Prevê, por unidade, o risco de aumento de cancelamentos no mês seguinte, usando os dados já capturados pelo pipeline (sem depender de dado de aluno individual). Arquitetura adaptada do repositório
+[Rinkyshu200/customer-churn-dashboard](https://github.com/Rinkyshu200/customer-churn-dashboard). Detalhamento completo em `PRD_SmartFit_Churn_Prediction.md`.
+
+### 1. Instalar dependências extras
+Essas dependências ficam separadas de `requirements.txt` porque o módulo é opcional:
+```bash
+pip install -r requirements-ml.txt
+```
+
+### 2. Treinar o modelo
+Exige pelo menos 3 meses consecutivos de histórico consolidado no banco (rode o backfill primeiro):
+```bash
+python -m app.cli train-churn-model
+```
+
+### 3. Gerar predições em lote e gravar no banco
+```bash
+python -m app.cli predict-churn --month 2026-08
+```
+
+### 4. Rodar o app interativo (Streamlit)
+```bash
+streamlit run app/ml/streamlit_app.py
+```
+Acesse em: `http://localhost:8501`. O painel Flask (`http://localhost:5000`) também mostra um link direto para esse app.
+
+**Recursos do App:**
+- Predição individual (formulário) com explicação por importância de feature.
+- Predição em lote via upload de CSV, com download do resultado.
+- Dashboard de analytics do modelo (acurácia, matriz de confusão, curva ROC, importância de features).
 
 ---
 

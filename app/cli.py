@@ -169,6 +169,77 @@ def cmd_init_db(args):
     print("[BD] Inicializando Tabelas do Banco de Dados...")
     init_db()
 
+def cmd_train_churn_model(args):
+    print("[ML] Treinando modelo de risco de cancelamento...")
+    from app.ml.model_utils import train_model, InsufficientDataError
+
+    try:
+        conn = get_connection()
+    except Exception as e:
+        print(f"[ERRO] Não foi possível conectar ao banco de dados: {e}")
+        sys.exit(1)
+
+    try:
+        model, metrics, model_data = train_model(conn)
+        print(f"[OK] Modelo treinado com {model_data['n_amostras_treino']} amostras de treino "
+              f"e {model_data['n_amostras_teste']} de teste.")
+        print(f"     Acurácia:  {metrics['accuracy']:.3f}")
+        print(f"     Precisão:  {metrics['precision']:.3f}")
+        print(f"     Recall:    {metrics['recall']:.3f}")
+        roc_auc = metrics['roc_auc']
+        print(f"     ROC AUC:   {roc_auc:.3f}" if roc_auc == roc_auc else "     ROC AUC:   N/A")
+        print(f"     Corte de alto risco (percentil {75}): {model_data['risk_threshold']:.4f}")
+        print(f"     Versão do modelo: {model_data['versao_modelo']}")
+    except InsufficientDataError as e:
+        print(f"[ERRO] Dado insuficiente para treinar: {e}")
+        sys.exit(1)
+    finally:
+        conn.close()
+
+def cmd_predict_churn(args):
+    print(f"[ML] Gerando predições de risco de cancelamento para {args.month}...")
+    from app.ml.model_utils import load_model, predict_for_month, InsufficientDataError
+
+    try:
+        model_data = load_model()
+    except FileNotFoundError as e:
+        print(f"[ERRO] {e}")
+        sys.exit(1)
+
+    try:
+        conn = get_connection()
+    except Exception as e:
+        print(f"[ERRO] Não foi possível conectar ao banco de dados: {e}")
+        sys.exit(1)
+
+    try:
+        result = predict_for_month(conn, model_data, args.month)
+
+        with conn.cursor() as cur:
+            for _, row in result.iterrows():
+                cur.execute("""
+                    INSERT INTO churn_predicoes (unidade_id, mes_referencia, probabilidade_risco, nivel_risco, versao_modelo)
+                    VALUES (%s, %s, %s, %s, %s)
+                    ON CONFLICT (unidade_id, mes_referencia, versao_modelo) DO UPDATE SET
+                        probabilidade_risco = EXCLUDED.probabilidade_risco,
+                        nivel_risco = EXCLUDED.nivel_risco,
+                        gerado_em = CURRENT_TIMESTAMP;
+                """, (
+                    int(row["unidade_id"]), row["mes_referencia"],
+                    float(row["probabilidade_risco"]), row["nivel_risco"],
+                    model_data["versao_modelo"],
+                ))
+        conn.commit()
+
+        alto_risco = (result["nivel_risco"] == "Alto").sum()
+        print(f"[OK] {len(result)} predições gravadas em churn_predicoes.")
+        print(f"     Unidades em risco Alto: {alto_risco}")
+    except InsufficientDataError as e:
+        print(f"[ERRO] {e}")
+        sys.exit(1)
+    finally:
+        conn.close()
+
 def cmd_export_xlsx(args):
     print("[EXPORT] Gerando planilha com os dados capturados...")
     try:
@@ -216,6 +287,13 @@ def main():
     p_export.add_argument('--date', type=str, help='Filtra por uma data de referência específica (YYYY-MM-DD). Se omitido, exporta tudo.')
     p_export.add_argument('--output', type=str, help='Caminho do arquivo .xlsx de saída (padrão: exports/dados_capturados.xlsx)')
 
+    # train-churn-model
+    subparsers.add_parser('train-churn-model', help='Treina o modelo de risco de cancelamento com dados reais do banco')
+
+    # predict-churn
+    p_predict_churn = subparsers.add_parser('predict-churn', help='Gera predições de risco de cancelamento para um mês e grava no banco')
+    p_predict_churn.add_argument('--month', type=str, required=True, help='Mês de referência no formato YYYY-MM')
+
     args = parser.parse_args()
 
     if not args.command:
@@ -228,7 +306,9 @@ def main():
         'test-coverage': cmd_test_coverage,
         'backfill': cmd_backfill,
         'run-daily': cmd_run_daily,
-        'export-xlsx': cmd_export_xlsx
+        'export-xlsx': cmd_export_xlsx,
+        'train-churn-model': cmd_train_churn_model,
+        'predict-churn': cmd_predict_churn
     }
     
     commands[args.command](args)

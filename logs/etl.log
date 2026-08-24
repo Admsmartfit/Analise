@@ -72,3 +72,13 @@
 2026-08-23 13:17:37,328 [WARNING]  * Debugger is active!
 2026-08-23 13:17:37,332 [INFO]  * Debugger PIN: 120-359-007
 2026-08-23 13:17:41,754 [INFO] 127.0.0.1 - - [23/Aug/2026 13:17:41] "GET / HTTP/1.1" 200 -
+2026-08-23 16:09:30,422 [INFO] [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:5000
+ * Running on http://192.168.0.65:5000
+2026-08-23 16:09:30,423 [INFO] [33mPress CTRL+C to quit[0m
+2026-08-23 16:09:30,436 [INFO]  * Restarting with watchdog (windowsapi)
+2026-08-23 16:09:30,900 [WARNING]  * Debugger is active!
+2026-08-23 16:09:30,904 [INFO]  * Debugger PIN: 120-359-007
+2026-08-23 16:09:33,409 [INFO] 127.0.0.1 - - [23/Aug/2026 16:09:33] "GET / HTTP/1.1" 200 -
+2026-08-23 16:09:33,779 [INFO] 127.0.0.1 - - [23/Aug/2026 16:09:33] "GET / HTTP/1.1" 200 -

@@ -97,6 +97,20 @@ CREATE TABLE IF NOT EXISTS fato_pre_venda_diaria (
     CONSTRAINT unq_data_unidade_pre_venda UNIQUE (data_referencia, unidade_pre_venda_id)
 );
 
+-- Guarda o histórico de predições de risco de cancelamento geradas pelo módulo de ML,
+-- para acompanhar acerto/erro ao longo do tempo.
+CREATE TABLE IF NOT EXISTS churn_predicoes (
+    id BIGSERIAL PRIMARY KEY,
+    unidade_id INT NOT NULL REFERENCES dim_unidade(id),
+    mes_referencia DATE NOT NULL,                -- mês para o qual a previsão foi feita
+    probabilidade_risco NUMERIC(5,4) NOT NULL,   -- 0.0000 a 1.0000
+    nivel_risco VARCHAR(10) NOT NULL,            -- 'Baixo', 'Médio', 'Alto'
+    versao_modelo VARCHAR(50) NOT NULL,          -- timestamp do treino, para rastreabilidade
+    gerado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT unq_predicao_unidade_mes UNIQUE (unidade_id, mes_referencia, versao_modelo)
+);
+
 CREATE TABLE IF NOT EXISTS controle_backfill (
     id SERIAL PRIMARY KEY,
     gmail_message_id VARCHAR(150) NOT NULL UNIQUE,
@@ -115,3 +129,5 @@ CREATE INDEX IF NOT EXISTS idx_cancel_detalhe ON fato_cancelamentos_detalhada(pl
 CREATE INDEX IF NOT EXISTS idx_fato_message_id ON fato_metricas_diarias(gmail_message_id);
 CREATE INDEX IF NOT EXISTS idx_pre_venda_data ON fato_pre_venda_diaria(data_referencia);
 CREATE INDEX IF NOT EXISTS idx_pre_venda_unidade ON fato_pre_venda_diaria(unidade_pre_venda_id);
+CREATE INDEX IF NOT EXISTS idx_churn_predicoes_unidade ON churn_predicoes(unidade_id);
+CREATE INDEX IF NOT EXISTS idx_churn_predicoes_mes ON churn_predicoes(mes_referencia);

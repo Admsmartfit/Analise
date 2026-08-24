@@ -7,6 +7,9 @@ from app.etl.backfill import process_single_email
 app = Flask(__name__)
 app.secret_key = os.getenv("FLASK_SECRET_KEY", "smartfit-etl-secret-key-12345")
 
+STREAMLIT_PORT = os.getenv("STREAMLIT_PORT", "8501")
+STREAMLIT_URL = f"http://localhost:{STREAMLIT_PORT}"
+
 def get_db_stats():
     """Busca as estatísticas gerais do controle de backfill no banco."""
     stats = {'total': 0, 'pendente': 0, 'processado': 0, 'erro': 0, 'success_rate': 100.0}
@@ -63,7 +66,7 @@ def get_db_stats():
 @app.route('/')
 def index():
     stats, latest_errors = get_db_stats()
-    return render_template('index.html', stats=stats, latest_errors=latest_errors)
+    return render_template('index.html', stats=stats, latest_errors=latest_errors, streamlit_url=STREAMLIT_URL)
 
 @app.route('/reprocess/<message_id>', methods=['POST'])
 def reprocess(message_id):

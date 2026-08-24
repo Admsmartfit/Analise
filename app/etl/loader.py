@@ -91,13 +91,17 @@ def load_parsed_data(conn, parsed_data, data_referencia, gmail_message_id):
             vendas_geral_dia = main['vendas_geral_dia'] if main else 0
             vendas_geral_mes = main['vendas_geral_mes'] if main else 0
             
-            transferencias_liquida_mes = cancel['transferencias_liquida_mes'] if cancel else 0.0
-            
+            # No layout real do e-mail, Transferências/Cancelamentos vêm dentro da própria
+            # linha "main" (mesma tabela das unidades). Mantemos "cancel" como respaldo
+            # para o caso (previsto no PRD original) de um layout com tabela separada.
+            transferencias_liquida_mes = main['transferencias_liquida_mes'] if main else (cancel['transferencias_liquida_mes'] if cancel else 0.0)
+            cancelamentos_detalhe = (main['cancelamentos_detalhe'] if main else None) or (cancel['cancelamentos_detalhe'] if cancel else {})
+
             # Payloads brutos para rede de segurança
             detalhe_vendas_json = Json(main['vendas_detalhe']) if main else Json({})
             detalhe_movimentacoes_json = Json({
                 'transferencias_liquida_mes': transferencias_liquida_mes,
-                'cancelamentos': cancel['cancelamentos_detalhe'] if cancel else {}
+                'cancelamentos': cancelamentos_detalhe
             })
             
             # --- TABELA 2: fato_metricas_diarias (Upsert) ---
@@ -173,8 +177,8 @@ def load_parsed_data(conn, parsed_data, data_referencia, gmail_message_id):
                     """, (fato_diaria_id, canal, plano, qtds['dia'], qtds['mes']))
             
             # --- TABELA 4: fato_cancelamentos_detalhada (Upsert) ---
-            if cancel and cancel['cancelamentos_detalhe']:
-                for key, val in cancel['cancelamentos_detalhe'].items():
+            if cancelamentos_detalhe:
+                for key, val in cancelamentos_detalhe.items():
                     parts = key.split('|')
                     if len(parts) == 2:
                         _, plano = parts

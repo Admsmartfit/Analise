@@ -134,7 +134,17 @@ def normalize_unit_data(raw_row):
         if key.startswith('venda_detalhe|'):
             vendas_detalhe[key] = parse_int(value)
     normalized['vendas_detalhe'] = vendas_detalhe
-    
+
+    # 6. Transferências e Cancelamentos
+    # No layout real do e-mail, essas colunas vêm na MESMA tabela das unidades
+    # (não numa tabela "cancel" separada) — por isso são extraídas aqui também.
+    normalized['transferencias_liquida_mes'] = parse_float_currency(raw_row.get('transferencias_liquida_mes', 0.0))
+    cancelamentos_detalhe = {}
+    for key, value in raw_row.items():
+        if key.startswith('cancelamento_detalhe|'):
+            cancelamentos_detalhe[key] = parse_int(value)
+    normalized['cancelamentos_detalhe'] = cancelamentos_detalhe
+
     return normalized
 
 def normalize_pre_venda_data(raw_row):

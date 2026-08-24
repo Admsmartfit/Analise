@@ -185,6 +185,26 @@ O arquivo é salvo em `exports\dados_capturados.xlsx` (abra normalmente com o Ex
 
 ---
 
+## 📉 Passo 10 (Opcional): Previsão de Risco de Cancelamento
+
+Este é um módulo avançado que tenta prever quais unidades correm risco de ter mais cancelamentos no mês seguinte. Só funciona depois de já ter alguns meses de e-mails processados (Passo 8 + `backfill`).
+
+1. Instale os componentes extras (só precisa fazer isso uma vez):
+   ```powershell
+   pip install -r requirements-ml.txt
+   ```
+2. Treine o modelo:
+   ```powershell
+   python -m app.cli train-churn-model
+   ```
+3. Abra o painel visual:
+   ```powershell
+   streamlit run app/ml/streamlit_app.py
+   ```
+   Acesse `http://localhost:8501` no navegador. Ele também aparece como um botão "📉 Previsão de Cancelamento" no painel principal (`http://localhost:5000`).
+
+---
+
 ## 🆘 Problemas Comuns
 
 | O que aconteceu | O que fazer |
