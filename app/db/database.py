@@ -23,11 +23,12 @@ def get_connection():
     )
 
 def init_db():
-    """Executa o script schema.sql para inicializar o banco de dados."""
+    """Executa schema.sql e views.sql para inicializar/atualizar o banco de dados."""
     schema_path = os.path.join(os.path.dirname(__file__), "schema.sql")
+    views_path = os.path.join(os.path.dirname(__file__), "views.sql")
     if not os.path.exists(schema_path):
         raise FileNotFoundError(f"Arquivo schema.sql não encontrado em {schema_path}")
-        
+
     with open(schema_path, "r", encoding="utf-8") as f:
         schema_sql = f.read()
 
@@ -35,6 +36,9 @@ def init_db():
     try:
         with conn.cursor() as cursor:
             cursor.execute(schema_sql)
+            if os.path.exists(views_path):
+                with open(views_path, "r", encoding="utf-8") as f:
+                    cursor.execute(f.read())
         conn.commit()
         print("[OK] Banco de dados inicializado/verificado com sucesso.")
     except Exception as e:

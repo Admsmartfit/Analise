@@ -205,7 +205,66 @@ Acesse em: `http://localhost:8501`. O painel Flask (`http://localhost:5000`) tam
 **Recursos do App:**
 - Predição individual (formulário) com explicação por importância de feature.
 - Predição em lote via upload de CSV, com download do resultado.
+- **Retreinar por Unidade** — escolha uma unidade específica e retreine um modelo local para ela.
 - Dashboard de analytics do modelo (acurácia, matriz de confusão, curva ROC, importância de features).
+
+### 5. Modelo local por unidade (opcional)
+
+Cada unidade tem seu próprio perfil de público (cidade, mix de planos FitAcesso/SmartAcesso/Black),
+então o modelo geral às vezes não captura bem a realidade de uma unidade específica. Como uma
+única unidade só tem ~24 meses de histórico — pouco para um modelo confiável isolado — o retreino
+local usa a unidade escolhida **+ um grupo de unidades parecidas** (mesma região + mix de planos
+similar) como comparação.
+
+```bash
+# Lista as unidades disponíveis (com id, nome, região) para achar o id que você quer
+python -m app.cli list-units --search "nome da unidade"
+
+# Treina um modelo local só para essa unidade (usa até 40 unidades parecidas por padrão)
+python -m app.cli train-churn-model --unit-id 1634 --n-peers 40
+
+# Gera a predição da unidade usando o modelo local dela
+python -m app.cli predict-churn --month 2026-08 --unit-id 1634
+```
+
+O mesmo fluxo está disponível visualmente na aba **"🏢 Retreinar por Unidade"** do app Streamlit —
+basta buscar a unidade pelo nome e clicar em retreinar, sem usar o terminal.
+
+---
+
+## 📊 Painel Analítico BI — Comparação de Unidades e Regiões (opcional)
+
+Painel interativo "estilo Power BI" para comparar unidades entre si e uma unidade contra a média
+da sua região, com gráficos de tendência e filtros de múltipla seleção — sem escrever SQL.
+Construído sobre o [Metabase](https://github.com/metabase/metabase) (open source), conectado
+diretamente ao `smartfit_db`. Detalhamento completo em `PRD_SmartFit_Dashboard_BI.md`.
+
+### 1. Views de apoio
+Já aplicadas automaticamente por `python -m app.cli init-db` (arquivo `app/db/views.sql`).
+
+### 2. Subir o Metabase (Docker)
+```bash
+docker compose up -d
+```
+Acesse `http://localhost:3000` na primeira vez para criar a conta de administrador e conectar o
+banco `smartfit_db` (Adicionar banco de dados → PostgreSQL → host `host.docker.internal`, porta
+`5432`, banco `smartfit_db`). Recomenda-se criar um usuário PostgreSQL somente-leitura dedicado:
+```sql
+CREATE ROLE metabase_reader LOGIN PASSWORD 'escolha-uma-senha';
+GRANT CONNECT ON DATABASE smartfit_db TO metabase_reader;
+GRANT USAGE ON SCHEMA public TO metabase_reader;
+GRANT SELECT ON ALL TABLES IN SCHEMA public TO metabase_reader;
+ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT SELECT ON TABLES TO metabase_reader;
+```
+
+O painel Flask (`http://localhost:5000`) mostra um link direto ("📊 Painel Analítico (BI)").
+
+**Dashboards prontos:**
+- **Visão Geral da Rede** — KPIs e tendência de ativos/vendas, filtráveis por país/região.
+- **Comparação entre Unidades** — selecione 2 ou mais unidades e veja a tendência de todas no mesmo gráfico.
+- **Unidade vs. Região** — compare uma unidade contra a média da sua região, com filtro em cascata.
+- **Risco de Cancelamento** — visualiza as predições geradas por `predict-churn`.
+- **Pré-vendas** — acompanhamento das unidades ainda não inauguradas.
 
 ---
 

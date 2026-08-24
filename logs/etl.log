@@ -82,3 +82,14 @@
 2026-08-23 16:09:30,904 [INFO]  * Debugger PIN: 120-359-007
 2026-08-23 16:09:33,409 [INFO] 127.0.0.1 - - [23/Aug/2026 16:09:33] "GET / HTTP/1.1" 200 -
 2026-08-23 16:09:33,779 [INFO] 127.0.0.1 - - [23/Aug/2026 16:09:33] "GET / HTTP/1.1" 200 -
+2026-08-23 18:12:42,681 [INFO] [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:5000
+ * Running on http://192.168.0.65:5000
+2026-08-23 18:12:42,682 [INFO] [33mPress CTRL+C to quit[0m
+2026-08-23 18:12:42,696 [INFO]  * Restarting with watchdog (windowsapi)
+2026-08-23 18:12:42,994 [WARNING]  * Debugger is active!
+2026-08-23 18:12:42,998 [INFO]  * Debugger PIN: 120-359-007
+2026-08-23 18:12:45,596 [INFO] 127.0.0.1 - - [23/Aug/2026 18:12:45] "GET / HTTP/1.1" 200 -
+2026-08-23 18:12:45,951 [INFO] 127.0.0.1 - - [23/Aug/2026 18:12:45] "GET / HTTP/1.1" 200 -
+2026-08-24 08:44:05,339 [INFO]  * Detected change in 'C:\\Users\\ralan\\programa\\Analise\\app\\web\\routes.py', reloading

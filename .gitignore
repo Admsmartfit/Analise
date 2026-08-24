@@ -1,0 +1,23 @@
+# Segredos e configuração local
+.env
+
+# Ambiente virtual Python
+venv/
+
+# Cache do Python
+__pycache__/
+*.pyc
+
+# Logs e saídas geradas localmente
+logs/
+exports/
+
+# Modelo de Machine Learning treinado (gerado localmente, não precisa versionar)
+app/ml/models/*.pkl
+
+# Credenciais e tokens do Gmail (se algum dia usado)
+app/auth/credentials/
+
+# Editor / SO
+.vscode/
+.DS_Store

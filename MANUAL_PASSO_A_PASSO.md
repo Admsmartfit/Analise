@@ -205,6 +205,21 @@ Este é um módulo avançado que tenta prever quais unidades correm risco de ter
 
 ---
 
+## 📊 Passo 11 (Opcional): Painel de Comparação entre Unidades (estilo Power BI)
+
+Este painel permite comparar várias unidades ou uma unidade contra a média da região dela, com gráficos de tendência — sem precisar programar nada.
+
+1. Abra o Docker Desktop (se não estiver aberto).
+2. No terminal, na pasta do projeto, rode:
+   ```powershell
+   docker compose up -d
+   ```
+3. Acesse `http://localhost:3000` no navegador. Da primeira vez, crie sua conta de administrador do painel.
+4. Ele também aparece como o botão "📊 Painel Analítico (BI)" no painel principal (`http://localhost:5000`).
+5. Dentro do painel, escolha o dashboard **"Comparacao entre Unidades"** e use o filtro no topo para escolher 2 ou mais unidades — o gráfico se atualiza sozinho.
+
+---
+
 ## 🆘 Problemas Comuns
 
 | O que aconteceu | O que fazer |

@@ -170,8 +170,7 @@ def cmd_init_db(args):
     init_db()
 
 def cmd_train_churn_model(args):
-    print("[ML] Treinando modelo de risco de cancelamento...")
-    from app.ml.model_utils import train_model, InsufficientDataError
+    from app.ml.model_utils import train_model, train_local_model_for_unit, InsufficientDataError
 
     try:
         conn = get_connection()
@@ -180,7 +179,15 @@ def cmd_train_churn_model(args):
         sys.exit(1)
 
     try:
-        model, metrics, model_data = train_model(conn)
+        if args.unit_id:
+            print(f"[ML] Treinando modelo LOCAL para a unidade {args.unit_id} (unidade + unidades parecidas)...")
+            model, metrics, model_data = train_local_model_for_unit(conn, args.unit_id, n_peers=args.n_peers)
+            print(f"[OK] Unidade: {model_data['unidade_nome']} ({model_data['unidade_regiao']})")
+            print(f"     Grupo de comparação: {model_data['n_peers']} unidades parecidas + a própria unidade")
+        else:
+            print("[ML] Treinando modelo GLOBAL de risco de cancelamento...")
+            model, metrics, model_data = train_model(conn)
+
         print(f"[OK] Modelo treinado com {model_data['n_amostras_treino']} amostras de treino "
               f"e {model_data['n_amostras_teste']} de teste.")
         print(f"     Acurácia:  {metrics['accuracy']:.3f}")
@@ -188,7 +195,7 @@ def cmd_train_churn_model(args):
         print(f"     Recall:    {metrics['recall']:.3f}")
         roc_auc = metrics['roc_auc']
         print(f"     ROC AUC:   {roc_auc:.3f}" if roc_auc == roc_auc else "     ROC AUC:   N/A")
-        print(f"     Corte de alto risco (percentil {75}): {model_data['risk_threshold']:.4f}")
+        print(f"     Corte de alto risco (percentil 75): {model_data['risk_threshold']:.4f}")
         print(f"     Versão do modelo: {model_data['versao_modelo']}")
     except InsufficientDataError as e:
         print(f"[ERRO] Dado insuficiente para treinar: {e}")
@@ -196,12 +203,37 @@ def cmd_train_churn_model(args):
     finally:
         conn.close()
 
-def cmd_predict_churn(args):
-    print(f"[ML] Gerando predições de risco de cancelamento para {args.month}...")
-    from app.ml.model_utils import load_model, predict_for_month, InsufficientDataError
+def cmd_list_units(args):
+    from app.ml.model_utils import list_units_with_data
 
     try:
-        model_data = load_model()
+        conn = get_connection()
+    except Exception as e:
+        print(f"[ERRO] Não foi possível conectar ao banco de dados: {e}")
+        sys.exit(1)
+
+    try:
+        df = list_units_with_data(conn)
+        if args.search:
+            termo = args.search.lower()
+            df = df[df['nome_digital'].str.lower().str.contains(termo)]
+        print(f"{'ID':>6}  {'Nome':30}  {'Região':30}  Meses")
+        for _, row in df.iterrows():
+            print(f"{row['unidade_id']:>6}  {row['nome_digital'][:30]:30}  {row['regiao_uf'][:30]:30}  {row['n_meses']}")
+        print(f"\nTotal: {len(df)} unidades")
+    finally:
+        conn.close()
+
+def cmd_predict_churn(args):
+    from app.ml.model_utils import load_model, predict_for_month, InsufficientDataError
+
+    if args.unit_id:
+        print(f"[ML] Gerando predição (modelo local) para a unidade {args.unit_id} em {args.month}...")
+    else:
+        print(f"[ML] Gerando predições (modelo global) de risco de cancelamento para {args.month}...")
+
+    try:
+        model_data = load_model(args.unit_id)
     except FileNotFoundError as e:
         print(f"[ERRO] {e}")
         sys.exit(1)
@@ -213,7 +245,7 @@ def cmd_predict_churn(args):
         sys.exit(1)
 
     try:
-        result = predict_for_month(conn, model_data, args.month)
+        result = predict_for_month(conn, model_data, args.month, unidade_id=args.unit_id)
 
         with conn.cursor() as cur:
             for _, row in result.iterrows():
@@ -288,11 +320,18 @@ def main():
     p_export.add_argument('--output', type=str, help='Caminho do arquivo .xlsx de saída (padrão: exports/dados_capturados.xlsx)')
 
     # train-churn-model
-    subparsers.add_parser('train-churn-model', help='Treina o modelo de risco de cancelamento com dados reais do banco')
+    p_train_churn = subparsers.add_parser('train-churn-model', help='Treina o modelo de risco de cancelamento (global ou local por unidade)')
+    p_train_churn.add_argument('--unit-id', type=int, dest='unit_id', help='Treina um modelo LOCAL só para esta unidade (id de dim_unidade) + unidades parecidas. Se omitido, treina o modelo global da rede.')
+    p_train_churn.add_argument('--n-peers', type=int, dest='n_peers', default=40, help='Nº de unidades parecidas a usar no treino local (padrão: 40)')
+
+    # list-units
+    p_list_units = subparsers.add_parser('list-units', help='Lista as unidades disponíveis para retreino local (com id, nome e região)')
+    p_list_units.add_argument('--search', type=str, help='Filtra por parte do nome da unidade')
 
     # predict-churn
     p_predict_churn = subparsers.add_parser('predict-churn', help='Gera predições de risco de cancelamento para um mês e grava no banco')
     p_predict_churn.add_argument('--month', type=str, required=True, help='Mês de referência no formato YYYY-MM')
+    p_predict_churn.add_argument('--unit-id', type=int, dest='unit_id', help='Usa o modelo local dessa unidade em vez do modelo global (precisa já ter sido treinado com train-churn-model --unit-id)')
 
     args = parser.parse_args()
 
@@ -308,6 +347,7 @@ def main():
         'run-daily': cmd_run_daily,
         'export-xlsx': cmd_export_xlsx,
         'train-churn-model': cmd_train_churn_model,
+        'list-units': cmd_list_units,
         'predict-churn': cmd_predict_churn
     }
     

@@ -70,13 +70,30 @@ def parse_float_currency(val):
 def extract_pais_from_sigla(sigla):
     """Extrai o código de país embutido na sigla (ex: 'SBRSPCSTZ01' -> 'BR').
 
-    Necessário porque nomes de unidade colidem entre países (ex: várias
-    unidades chamadas "Santa Cruz" em países diferentes).
+    NÃO USE para popular dim_unidade.pais — o formato da sigla mudou ao longo do
+    histórico (siglas de meses mais antigos não seguem o padrão "S" + país), o que
+    fazia essa função devolver valores diferentes para a MESMA unidade física em
+    meses diferentes, fragmentando-a em várias linhas de dim_unidade. Mantida só
+    como utilitário auxiliar; a extração usada de fato é extract_pais_from_regiao.
     """
     if not sigla:
         return ''
     match = re.match(r'^S([A-Z]{2})', sigla.strip().upper())
     return match.group(1) if match else sigla.strip().upper()
+
+def extract_pais_from_regiao(regiao_uf):
+    """Extrai o país a partir do texto do bloco de região do e-mail
+    (ex: 'Chile - Región Metropolitana' -> 'Chile').
+
+    Preferido sobre extrair da sigla: o texto da região é estável (o mesmo texto
+    de cabeçalho sempre gera o mesmo "país"), diferente da sigla, que mudou de
+    formato ao longo do tempo. Blocos sem país explícito (ex: "Franquia",
+    "Digital") viram seu próprio "país" — não são um código ISO real, mas
+    permanecem estáveis, o que é o que importa para não fragmentar a unidade.
+    """
+    if not regiao_uf:
+        return ''
+    return regiao_uf.split(' - ')[0].strip()
 
 def parse_date(date_str):
     """Tenta converter a string de data em um objeto date do Python (YYYY-MM-DD)."""
@@ -103,10 +120,10 @@ def normalize_unit_data(raw_row):
     # Alguns layouts de e-mail chamam essa coluna apenas de "Nome" — tratamos como sinônimos.
     normalized['sigla'] = clean_name(raw_row.get('sigla', ''))
     normalized['nome_digital'] = clean_name(raw_row.get('nome_digital') or raw_row.get('nome_unidade', ''))
-    normalized['pais'] = extract_pais_from_sigla(normalized['sigla'])
     normalized['data_inauguracao'] = parse_date(raw_row.get('data_inauguracao', ''))
     normalized['unidade_imatura'] = raw_row.get('unidade_imatura', False)
     normalized['bloco_email'] = raw_row.get('bloco_email', '')
+    normalized['pais'] = extract_pais_from_regiao(normalized['bloco_email'])
     
     # 2. Ativos
     normalized['total_ativos'] = parse_int(raw_row.get('total_ativos', 0))

@@ -16,7 +16,8 @@ from sklearn.model_selection import train_test_split
 from app.db.database import get_connection
 from app.ml.model_utils import (
     load_model, get_model_metrics, build_training_dataset, preprocess_features,
-    FEATURE_ORDER, CATEGORICAL_COLS,
+    FEATURE_ORDER, CATEGORICAL_COLS, list_units_with_data, find_peer_units,
+    train_local_model_for_unit, predict_for_month, InsufficientDataError,
 )
 from app.ml.data_utils import preprocess_input_data, validate_csv_data, FEATURE_DESCRIPTIONS
 from app.ml.visualization_utils import (
@@ -71,8 +72,12 @@ def main():
     st.sidebar.title("Navegação")
     page = st.sidebar.selectbox(
         "Escolha uma seção:",
-        ["🏠 Início", "🔮 Predição Individual", "📁 Predição em Lote", "📈 Analytics do Modelo", "ℹ️ Sobre"],
+        ["🏠 Início", "🔮 Predição Individual", "📁 Predição em Lote", "🏢 Retreinar por Unidade", "📈 Analytics do Modelo", "ℹ️ Sobre"],
     )
+
+    if page == "🏢 Retreinar por Unidade":
+        show_retrain_by_unit()
+        return
 
     if not MODEL_LOADED:
         st.error(f"Não foi possível carregar o modelo: {LOAD_ERROR}")
@@ -292,6 +297,127 @@ def show_batch_prediction():
         file_name="modelo_predicao_lote.csv",
         mime="text/csv",
     )
+
+
+@st.cache_data(ttl=300)
+def _load_units_df():
+    conn = get_connection()
+    try:
+        return list_units_with_data(conn)
+    finally:
+        conn.close()
+
+
+def _persist_predictions(conn, result_df, versao_modelo):
+    with conn.cursor() as cur:
+        for _, row in result_df.iterrows():
+            cur.execute("""
+                INSERT INTO churn_predicoes (unidade_id, mes_referencia, probabilidade_risco, nivel_risco, versao_modelo)
+                VALUES (%s, %s, %s, %s, %s)
+                ON CONFLICT (unidade_id, mes_referencia, versao_modelo) DO UPDATE SET
+                    probabilidade_risco = EXCLUDED.probabilidade_risco,
+                    nivel_risco = EXCLUDED.nivel_risco,
+                    gerado_em = CURRENT_TIMESTAMP;
+            """, (
+                int(row["unidade_id"]), row["mes_referencia"],
+                float(row["probabilidade_risco"]), row["nivel_risco"], versao_modelo,
+            ))
+    conn.commit()
+
+
+def show_retrain_by_unit():
+    st.header("🏢 Retreinar Modelo por Unidade")
+    st.markdown("""
+    Cada unidade tem seu próprio perfil de público (cidade, bairro, mix de planos), então o
+    modelo geral da rede nem sempre captura bem a realidade de uma unidade específica.
+
+    Uma unidade sozinha só tem ~24 meses de histórico — pouco para um modelo confiável isolado.
+    Por isso, o retreino aqui usa a unidade escolhida **+ um grupo de unidades parecidas**
+    (mesma região e perfil de mix de planos similar) como comparação, dando uma resposta
+    específica para a unidade com dado suficiente para não ser aleatória.
+    """)
+
+    units_df = _load_units_df()
+    if units_df.empty:
+        st.warning("Nenhuma unidade com histórico suficiente encontrada.")
+        return
+
+    busca = st.text_input("🔎 Buscar unidade pelo nome", "")
+    filtrado = units_df[units_df["nome_digital"].str.lower().str.contains(busca.lower())] if busca else units_df
+
+    if filtrado.empty:
+        st.info("Nenhuma unidade encontrada com esse nome.")
+        return
+
+    opcoes = {
+        f"{row['nome_digital']} — {row['regiao_uf']} ({row['n_meses']} meses)": int(row["unidade_id"])
+        for _, row in filtrado.iterrows()
+    }
+    escolha = st.selectbox("Unidade", list(opcoes.keys()))
+    unidade_id = opcoes[escolha]
+
+    n_peers = st.slider("Número de unidades parecidas a usar como comparação", 10, 100, 40, step=5)
+
+    if st.button("🔁 Retreinar modelo para esta unidade"):
+        conn = get_connection()
+        try:
+            with st.spinner("Buscando unidades parecidas e treinando..."):
+                peer_ids, unidade_info = find_peer_units(conn, unidade_id, n_peers=n_peers)
+                model, metrics, model_data = train_local_model_for_unit(conn, unidade_id, n_peers=n_peers)
+
+            st.success(f"Modelo local treinado para **{unidade_info['nome_digital']}** ({unidade_info['regiao_uf']})")
+
+            col1, col2, col3, col4 = st.columns(4)
+            with col1:
+                st.metric("Acurácia", f"{metrics['accuracy']:.3f}")
+            with col2:
+                st.metric("Precisão", f"{metrics['precision']:.3f}")
+            with col3:
+                st.metric("Recall", f"{metrics['recall']:.3f}")
+            with col4:
+                roc = metrics['roc_auc']
+                st.metric("ROC AUC", f"{roc:.3f}" if roc == roc else "N/A")
+
+            st.caption(f"Treinado com {model_data['n_amostras_treino']} amostras (unidade + {len(peer_ids)} unidades parecidas) "
+                       f"e testado com {model_data['n_amostras_teste']}.")
+
+            st.subheader("🔍 Importância das Features neste Modelo Local")
+            st.plotly_chart(create_feature_importance_plot(model.feature_importances_, FEATURE_ORDER), use_container_width=True)
+
+            st.session_state["local_model_data"] = model_data
+            st.session_state["local_model_unidade_id"] = unidade_id
+
+        except InsufficientDataError as e:
+            st.error(f"Não foi possível treinar: {e}")
+        finally:
+            conn.close()
+
+    if st.session_state.get("local_model_unidade_id") == unidade_id and "local_model_data" in st.session_state:
+        st.markdown("---")
+        st.subheader("🎯 Gerar Predição com este Modelo Local")
+        if st.button("Gerar predição para o mês mais recente"):
+            conn = get_connection()
+            try:
+                with conn.cursor() as cur:
+                    cur.execute("SELECT MAX(data_referencia) FROM fato_metricas_diarias WHERE unidade_id = %s;", (unidade_id,))
+                    ultima_data = cur.fetchone()[0]
+                mes_referencia = ultima_data.strftime("%Y-%m")
+                model_data = st.session_state["local_model_data"]
+                result = predict_for_month(conn, model_data, mes_referencia, unidade_id=unidade_id)
+                _persist_predictions(conn, result, model_data["versao_modelo"])
+
+                prob = float(result.iloc[0]["probabilidade_risco"])
+                nivel = result.iloc[0]["nivel_risco"]
+                col1, col2 = st.columns(2)
+                with col1:
+                    st.metric(f"Probabilidade de Alto Risco — {mes_referencia}", f"{prob:.1%}")
+                with col2:
+                    st.metric("Nível de Risco", f"{risk_emoji(nivel)} {nivel}")
+                st.caption("Predição gravada em churn_predicoes.")
+            except InsufficientDataError as e:
+                st.error(f"Não foi possível gerar a predição: {e}")
+            finally:
+                conn.close()
 
 
 def show_model_analytics():

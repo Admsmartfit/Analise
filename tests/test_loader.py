@@ -49,7 +49,7 @@ def test_loader_idempotency_calls():
     # Primeiro insert (Paulista) — colunas: nome_digital, pais, sigla_atual, regiao_uf, tipo_operacao, data_inauguracao
     args_p = dim_unidade_calls[0][0][1]
     assert args_p[0] == "Paulista"
-    assert args_p[1] == "SP01"  # sigla "SP01" não bate no padrão "S" + 2 letras, usa a própria sigla como país
+    assert args_p[1] == "Brasil"  # país extraído do texto da região ("Brasil - SP" -> "Brasil"), não da sigla
     assert args_p[2] == "SP01"
     assert args_p[3] == "Brasil - SP"
     assert args_p[4] == "Própria"
@@ -57,7 +57,7 @@ def test_loader_idempotency_calls():
     # Segundo insert (Berrini)
     args_b = dim_unidade_calls[1][0][1]
     assert args_b[0] == "Berrini"
-    assert args_b[1] == "SP02"
+    assert args_b[1] == "Brasil"
     assert args_b[2] == "SP02"
     assert args_b[3] == "Brasil - SP"
     assert args_b[4] == "Própria"
